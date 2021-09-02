@@ -28,8 +28,7 @@ fun KonanTarget.supportsMimallocAllocator(): Boolean =
     }
 
 fun KonanTarget.supportsLibBacktrace(): Boolean =
-        this.family.isAppleFamily || this.family == Family.LINUX ||
-                this.family == Family.ANDROID || this.family == Family.MINGW
+        this.family.isAppleFamily || this.family == Family.LINUX || this.family == Family.ANDROID
 
 fun KonanTarget.supportsThreads(): Boolean =
      when(this) {

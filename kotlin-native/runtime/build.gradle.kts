@@ -70,32 +70,36 @@ bitcode {
         language = CompileToBitcode.Language.C
         val useMachO = targetInfo.family.isAppleFamily
         val useElf = targetInfo.family in listOf(Family.LINUX, Family.ANDROID)
-        val usePE = targetInfo.family == Family.MINGW
         includeFiles = listOfNotNull(
-                "alloc.c".takeIf { usePE },
                 "atomic.c",
                 "backtrace.c",
                 "dwarf.c",
                 "elf.c".takeIf { useElf },
                 "fileline.c",
                 "macho.c".takeIf { useMachO },
-                "mmap.c".takeIf { !usePE },
-                "mmapio.c".takeIf { !usePE },
-                "pecoff.c".takeIf { usePE },
+                "mmap.c",
+                "mmapio.c",
                 "posix.c",
                 "print.c",
-                "read.c".takeIf { usePE },
                 "simple.c",
                 "sort.c",
                 "state.c"
         )
         srcDirs = files("$srcRoot/c")
-        val elfSize = targetInfo.architecture.let { if (it == TargetArchitecture.X64 || it == TargetArchitecture.ARM64) 64 else 32 }
+        val pointerSize = when (targetInfo.architecture) {
+            TargetArchitecture.X64 -> 64
+            TargetArchitecture.X86 -> 32
+            TargetArchitecture.ARM64 -> 64
+            TargetArchitecture.ARM32 -> 32
+            TargetArchitecture.MIPS32 -> 32
+            TargetArchitecture.MIPSEL32 -> 32
+            TargetArchitecture.WASM32 -> 32
+        }
         compilerArgs.addAll(listOfNotNull(
                 "-funwind-tables",
                 "-W", "-Wall", "-Wwrite-strings", "-Wstrict-prototypes", "-Wmissing-prototypes",
                 "-Wold-style-definition", "-Wmissing-format-attribute", "-Wcast-qual", "-O2",
-                "-DBACKTRACE_ELF_SIZE=$elfSize".takeIf { useElf }
+                "-DBACKTRACE_ELF_SIZE=$pointerSize".takeIf { useElf }
         ))
         headersDirs = files("$srcRoot/c/include")
 
