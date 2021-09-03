@@ -14579,6 +14579,18 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
                 }
 
                 @Test
+                @TestMetadata("tailrecWithExplicitCompanionObjectDispatcher.kt")
+                public void testTailrecWithExplicitCompanionObjectDispatcher() throws Exception {
+                    runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailrecWithExplicitCompanionObjectDispatcher.kt");
+                }
+
+                @Test
+                @TestMetadata("tailrecWithExplicitObjectDispatcher.kt")
+                public void testTailrecWithExplicitObjectDispatcher() throws Exception {
+                    runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailrecWithExplicitObjectDispatcher.kt");
+                }
+
+                @Test
                 @TestMetadata("thisReferences.kt")
                 public void testThisReferences() throws Exception {
                     runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/thisReferences.kt");
