@@ -428,12 +428,6 @@ open class DeepCopyIrTreeWithSymbols(
             expression.elements.transform(),
         ).copyAttributes(expression)
 
-    override fun visitConstantIntrinsic(expression: IrConstantIntrinsic): IrConstantValue =
-        IrConstantIntrinsicImpl(
-            expression.startOffset, expression.endOffset,
-            expression.expression.transform(),
-        ).copyAttributes(expression)
-
     override fun visitVararg(expression: IrVararg): IrVararg =
         IrVarargImpl(
             expression.startOffset, expression.endOffset,
