@@ -28,8 +28,22 @@ class ReportStatisticsToBuildScan(private val buildScan: BuildScanExtension, pri
 
         readableString.append("Performance: [")
         data.timeData.forEach { (key, value) -> readableString.append(key.readableString).append(": ").append(value).append("ms, ") }
-        data.perfData.forEach { (key, value) -> readableString.append(key.readableString).append(": ").append(value).append("kb, ") }
+        data.perfData.forEach { (key, value) ->
+            readableString.append(key.readableString).append(": ").append(readableFileLength(value)).append(", ")
+        }
         readableString.append("]; ")
         return readableString.toString()
     }
+
+    private val kbSize = 1024
+    private val mbSize = kbSize * kbSize
+    private val gbSize = kbSize * mbSize
+
+    private fun readableFileLength(length: Long): String =
+        when {
+            length / gbSize > 0 -> "${length / gbSize} GB"
+            length / mbSize > 0 -> "${length / mbSize} MB"
+            length / kbSize > 0 -> "${length / kbSize} KB"
+            else -> "$length b"
+        }
 }
