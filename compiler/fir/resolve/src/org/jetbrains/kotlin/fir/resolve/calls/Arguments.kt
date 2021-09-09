@@ -574,12 +574,11 @@ fun FirExpression.getExpectedTypeForSAMConversion(
     parameter: FirValueParameter/*, languageVersionSettings: LanguageVersionSettings*/
 ): ConeKotlinType {
     val shouldUnwrapVarargType = when (this) {
-        is FirSpreadArgumentExpression -> !isSpread
-        is FirNamedArgumentExpression -> expression is FirConstExpression<*>
-        else -> true
+        is FirSpreadArgumentExpression, is FirNamedArgumentExpression -> false
+        else -> parameter.isVararg
     }
 
-    return if (parameter.isVararg && shouldUnwrapVarargType) {
+    return if (shouldUnwrapVarargType) {
         parameter.returnTypeRef.coneType.varargElementType()
     } else {
         parameter.returnTypeRef.coneType
