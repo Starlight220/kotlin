@@ -26,9 +26,9 @@ class ModuleTests : IndexerTests() {
             }
         """.trimIndent())
 
-        val moduleInfo = getModulesInfo(compilationIncluding(files.directory), listOf("Foo"))
-        assertEquals(setOf(header.absolutePath), moduleInfo.ownHeaders)
-        assertEquals(listOf(header.absolutePath), moduleInfo.topLevelHeaders)
+        val modulesInfo = getModulesInfo(compilationIncluding(files.directory), listOf("Foo"))
+        assertEquals(setOf(header.absolutePath), modulesInfo.ownHeaders)
+        assertEquals(listOf(header.absolutePath), modulesInfo.topLevelHeaders.canonicalize())
     }
 
     @Test
@@ -47,9 +47,9 @@ class ModuleTests : IndexerTests() {
             }
         """.trimIndent())
 
-        val moduleInfo = getModulesInfo(compilationIncluding(files.directory), listOf("Foo"))
-        assertEquals(setOf(fooH.absolutePath, barH.absolutePath), moduleInfo.ownHeaders)
-        assertEquals(listOf(fooH.absolutePath), moduleInfo.topLevelHeaders)
+        val modulesInfo = getModulesInfo(compilationIncluding(files.directory), listOf("Foo"))
+        assertEquals(setOf(fooH.absolutePath, barH.absolutePath), modulesInfo.ownHeaders)
+        assertEquals(listOf(fooH.absolutePath), modulesInfo.topLevelHeaders.canonicalize())
     }
 
     @Test
@@ -71,9 +71,9 @@ class ModuleTests : IndexerTests() {
             }
         """.trimIndent())
 
-        val moduleInfo = getModulesInfo(compilationIncluding(files.directory), listOf("Foo"))
-        assertEquals(setOf(fooH.absolutePath), moduleInfo.ownHeaders)
-        assertEquals(listOf(fooH.absolutePath), moduleInfo.topLevelHeaders)
+        val modulesInfo = getModulesInfo(compilationIncluding(files.directory), listOf("Foo"))
+        assertEquals(setOf(fooH.absolutePath), modulesInfo.ownHeaders)
+        assertEquals(listOf(fooH.absolutePath), modulesInfo.topLevelHeaders.canonicalize())
     }
 
     @Test
@@ -93,9 +93,9 @@ class ModuleTests : IndexerTests() {
             }
         """.trimIndent())
 
-        val moduleInfo = getModulesInfo(compilation("-F${files.directory}"), listOf("Foo"))
-        assertEquals(setOf(fooH.absolutePath, barH.absolutePath, bazH.absolutePath), moduleInfo.ownHeaders)
-        assertEquals(listOf(fooH.absolutePath), moduleInfo.topLevelHeaders)
+        val modulesInfo = getModulesInfo(compilation("-F${files.directory}"), listOf("Foo"))
+        assertEquals(setOf(fooH.absolutePath, barH.absolutePath, bazH.absolutePath), modulesInfo.ownHeaders)
+        assertEquals(listOf(fooH.absolutePath), modulesInfo.topLevelHeaders.canonicalize())
     }
 
     @Test
@@ -152,6 +152,8 @@ class ModuleTests : IndexerTests() {
 
         assertContains(error.message.orEmpty(), "testModuleWithBadCode/Foo.h:1:1: error: unknown type name 'bad'")
     }
+
+    private fun List<String>.canonicalize() = this.map { File(it).canonicalFile }.map { it.absolutePath }
 
     private fun compilationIncluding(includeDirectory: File) = compilation("-I$includeDirectory")
 
