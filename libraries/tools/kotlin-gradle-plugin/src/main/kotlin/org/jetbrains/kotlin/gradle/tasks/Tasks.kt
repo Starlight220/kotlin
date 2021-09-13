@@ -689,7 +689,6 @@ abstract class KotlinCompile @Inject constructor(
         val environment = GradleCompilerEnvironment(
             defaultCompilerClasspath, messageCollector, outputItemCollector,
             outputFiles = allOutputFiles(),
-//            taskBuildDirectory = taskBuildDirectory,
             reportingSettings = reportingSettings,
             incrementalCompilationEnvironment = icEnv,
             kotlinScriptExtensions = sourceFilesExtensions.get().toTypedArray()
@@ -1103,7 +1102,6 @@ abstract class Kotlin2JsCompile @Inject constructor(
         val environment = GradleCompilerEnvironment(
             defaultCompilerClasspath, messageCollector, outputItemCollector,
             outputFiles = allOutputFiles(),
-//            taskBuildDirectory = taskBuildDirectory,
             reportingSettings = reportingSettings,
             incrementalCompilationEnvironment = icEnv
         )

@@ -181,7 +181,7 @@ abstract class IncrementalCompilerRunner<
                     buildHistoryFile.length() + lastBuildInfoFile.length() + abiSnapshotFile.length()
                 )
                 if (cacheDirectory.exists() && cacheDirectory.isDirectory()) {
-                    cacheDirectory.listFiles()?.filter { it.isFile }?.map { it.length() }?.sum()?.let {
+                    cacheDirectory.walkTopDown().filter { it.isFile }.map { it.length() }.sum().let {
                         reporter.addMetric(BuildPerformanceMetric.OUTPUT_SIZE, it)
                     }
                 }
