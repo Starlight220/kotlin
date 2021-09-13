@@ -153,7 +153,7 @@ dependencies {
     compile(project(":kotlin-stdlib"))
     compile(project(":kotlin-native:Interop:Runtime"))
 
-    testImplementation(project(":kotlin-test::kotlin-test-junit"))
+    testImplementation(kotlin("test-junit"))
 }
 
 val nativelibs = project.tasks.create<Copy>("nativelibs") {
