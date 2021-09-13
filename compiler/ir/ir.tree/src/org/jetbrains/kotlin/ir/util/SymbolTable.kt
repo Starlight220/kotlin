@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyExternal
 import org.jetbrains.kotlin.utils.threadLocal
 
@@ -728,6 +729,16 @@ class SymbolTable(
 
     }
 
+    private fun PropertyDescriptor.isAnnotationClassProperty(): Boolean {
+        return DescriptorUtils.isAnnotationClass(containingDeclaration as? ClassDescriptor ?: return false)
+    }
+
+    private fun getEffectiveModality(descriptor: PropertyDescriptor) =
+        when {
+            descriptor.isAnnotationClassProperty() -> Modality.OPEN
+            else -> descriptor.modality
+        }
+
     @OptIn(ObsoleteDescriptorBasedAPI::class)
     fun declareProperty(
         startOffset: Int,
@@ -739,7 +750,7 @@ class SymbolTable(
             irFactory.createProperty(
                 startOffset, endOffset, origin, symbol, name = nameProvider.nameForDeclaration(descriptor),
                 visibility = descriptor.visibility,
-                modality = descriptor.modality,
+                modality = getEffectiveModality(descriptor),
                 isVar = descriptor.isVar,
                 isConst = descriptor.isConst,
                 isLateinit = descriptor.isLateInit,
