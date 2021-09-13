@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.ir.createImplicitParameterDeclarationWithWrappedDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.*
 import org.jetbrains.kotlin.ir.declarations.*
@@ -67,11 +66,15 @@ open class AnnotationImplementationTransformer(val context: BackendContext, val 
         return newCall
     }
 
+    open fun IrClass.platformSetup() {}
+
     private fun createAnnotationImplementation(annotationClass: IrClass): IrClass {
         val localDeclarationParent = currentClass?.scope?.getLocalDeclarationParent() as? IrClass
         val parentFqName = annotationClass.fqNameWhenAvailable!!.asString().replace('.', '_')
         val wrapperName = Name.identifier("annotationImpl\$$parentFqName$0")
         val subclass = context.irFactory.buildClass {
+            startOffset = SYNTHETIC_OFFSET
+            endOffset = SYNTHETIC_OFFSET
             name = wrapperName
             origin = ANNOTATION_IMPLEMENTATION
             // It can be seen from inline functions and multiple classes within one file
@@ -82,9 +85,12 @@ open class AnnotationImplementationTransformer(val context: BackendContext, val 
             parent = localDeclarationParent ?: irFile ?: error("irFile in transformer should be specified when creating synthetic implementation")
             createImplicitParameterDeclarationWithWrappedDescriptor()
             superTypes = listOf(annotationClass.defaultType)
+            platformSetup()
         }
 
         val ctor = subclass.addConstructor {
+            startOffset = SYNTHETIC_OFFSET
+            endOffset = SYNTHETIC_OFFSET
             visibility = DescriptorVisibilities.PUBLIC
         }
         val (originalProps, implementationProps) = implementAnnotationProperties(subclass, annotationClass, ctor)
@@ -95,9 +101,9 @@ open class AnnotationImplementationTransformer(val context: BackendContext, val 
 
     fun implementAnnotationProperties(implClass: IrClass, annotationClass: IrClass, generatedConstructor: IrConstructor): Pair<List<IrProperty>, List<IrProperty>> {
         val ctorBody = context.irFactory.createBlockBody(
-            UNDEFINED_OFFSET, UNDEFINED_OFFSET, listOf(
+            SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, listOf(
                 IrDelegatingConstructorCallImpl(
-                    UNDEFINED_OFFSET, UNDEFINED_OFFSET, context.irBuiltIns.unitType, context.irBuiltIns.anyClass.constructors.single(),
+                    SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, context.irBuiltIns.unitType, context.irBuiltIns.anyClass.constructors.single(),
                     typeArgumentsCount = 0, valueArgumentsCount = 0
                 )
             )
@@ -112,6 +118,8 @@ open class AnnotationImplementationTransformer(val context: BackendContext, val 
             val propType = property.getter!!.returnType
             val propName = property.name
             val field = context.irFactory.buildField {
+                startOffset = SYNTHETIC_OFFSET
+                endOffset = SYNTHETIC_OFFSET
                 name = propName
                 type = propType
                 origin = ANNOTATION_IMPLEMENTATION
@@ -127,13 +135,15 @@ open class AnnotationImplementationTransformer(val context: BackendContext, val 
             }
 
             ctorBody.statements += IrSetFieldImpl(
-                UNDEFINED_OFFSET, UNDEFINED_OFFSET, field.symbol,
-                IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, implClass.thisReceiver!!.symbol),
-                IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, parameter.symbol),
+                SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, field.symbol,
+                IrGetValueImpl(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, implClass.thisReceiver!!.symbol),
+                IrGetValueImpl(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, parameter.symbol),
                 context.irBuiltIns.unitType,
             )
 
             val prop = implClass.addProperty {
+                startOffset = SYNTHETIC_OFFSET
+                endOffset = SYNTHETIC_OFFSET
                 name = propName
                 isVar = false
                 origin = ANNOTATION_IMPLEMENTATION
@@ -141,9 +151,12 @@ open class AnnotationImplementationTransformer(val context: BackendContext, val 
                 field.correspondingPropertySymbol = this.symbol
                 backingField = field
                 parent = implClass
+                overriddenSymbols = listOf(property.symbol)
             }
 
             prop.addGetter {
+                startOffset = SYNTHETIC_OFFSET
+                endOffset = SYNTHETIC_OFFSET
                 name = propName  // Annotation value getter should be named 'x', not 'getX'
                 returnType = propType.kClassToJClassIfNeeded() // On JVM, annotation store j.l.Class even if declared with KClass
                 origin = ANNOTATION_IMPLEMENTATION
@@ -152,11 +165,12 @@ open class AnnotationImplementationTransformer(val context: BackendContext, val 
             }.apply {
                 correspondingPropertySymbol = prop.symbol
                 dispatchReceiverParameter = implClass.thisReceiver!!.copyTo(this)
-                body = context.createIrBuilder(symbol).irBlockBody {
+                body = context.createIrBuilder(symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).irBlockBody {
                     var value: IrExpression = irGetField(irGet(dispatchReceiverParameter!!), field)
                     if (propType.isKClass()) value = this.kClassExprToJClassIfNeeded(value)
                     +irReturn(value)
                 }
+                overriddenSymbols = listOf(property.getter!!.symbol)
             }
 
             prop
@@ -230,7 +244,7 @@ class AnnotationImplementationMemberGenerator(
     // 2. Properties should be retrieved using getters without accessing backing fields
     //    (DataClassMembersGenerator typically tries to access fields)
     fun generateEqualsUsingGetters(equalsFun: IrSimpleFunction, typeForEquals: IrType, properties: List<IrProperty>) = equalsFun.apply {
-        body = backendContext.createIrBuilder(symbol).irBlockBody {
+        body = backendContext.createIrBuilder(symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).irBlockBody {
             val irType = typeForEquals
             fun irOther() = irGet(valueParameters[0])
             fun irThis() = irGet(dispatchReceiverParameter!!)
